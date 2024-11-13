@@ -1,6 +1,9 @@
 /bin/
 .DS_Store
-application.properties
+
+# Ignore application properties file
+src/main/resources/application.properties
+
 HELP.md
 target/
 !.mvn/wrapper/maven-wrapper.jar
