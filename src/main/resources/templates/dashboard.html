@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/thymeleaf-extras-springsecurity6">
+<head>
+    <title>Dashboard</title>
+</head>
+<body>
+<h1>Student Dashboard</h1>
+<p>Welcome to your dashboard!</p>
+
+<!-- Display this link only to admin users -->
+<div sec:authorize="hasRole('ROLE_ADMIN')">
+    <a href="/admin">Go to Admin Page</a>
+</div>
+<div>
+    <a href="/logout">Logout</a>
+</div>
+</body>
+</html>
