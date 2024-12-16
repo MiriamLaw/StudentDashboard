@@ -3,6 +3,7 @@ package com.coderscampus.domain;
 import jakarta.persistence.*;
 
 @Entity
+@Table(name = "profile")
 public class Profile {
 
     @Id
