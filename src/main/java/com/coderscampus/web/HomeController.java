@@ -7,6 +7,9 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.coderscampus.domain.Student;
+import com.coderscampus.service.StudentService;
+
 import java.time.LocalDate;
 
 @RestController
@@ -34,8 +37,8 @@ public class HomeController {
         // Create some test student data
         Student testStudent = new Student();
         testStudent.setEmail(email);
-        testStudent.setStartDate(LocalDate.now().minusWeeks(10)); // Example: started 10 weeks ago
-        testStudent.setWeeksInProgram(10L); // Example weeks in program
+        // testStudent.setStartDate(LocalDate.now().minusWeeks(10)); // Example: started 10 weeks ago
+        // testStudent.setWeeksInProgram(10L); // Example weeks in program
         
         // Add the test student to the model
         model.addAttribute("student", testStudent);
