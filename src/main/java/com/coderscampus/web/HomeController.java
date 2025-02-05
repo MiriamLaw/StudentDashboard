@@ -5,46 +5,34 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.stereotype.Controller;
 
 import com.coderscampus.domain.Student;
 import com.coderscampus.service.StudentService;
 
 import java.time.LocalDate;
 
-@RestController
+@Controller
 public class HomeController {
 
     @Autowired
     private StudentService studentService; // You'll need this to work with student data
 
     @GetMapping("/")
-    public String home(Model model) {
-        model.addAttribute("pageTitle", "Home");
-        return "index";
+    public String home(Model model, @AuthenticationPrincipal OAuth2User principal) {
+        // This will trigger OAuth2 at root endpoint
+        return "dashboard";  // Go straight to dashboard after authentication
     }
 
     @GetMapping("/dashboard")
     public String dashboard(Model model, @AuthenticationPrincipal OAuth2User principal) {
-        // The @AuthenticationPrincipal OAuth2User principal gives us access to the logged-in user's info
+        if (principal == null) {
+            return "redirect:/";  // Redirect to login if not authenticated
+        }
         
-        // Extract email from OAuth2User
         String email = principal.getAttribute("email");
-        
-        // Add basic user info to model
+        model.addAttribute("userEmail", email);
         model.addAttribute("pageTitle", "Student Dashboard");
-        
-        // Create some test student data
-        Student testStudent = new Student();
-        testStudent.setEmail(email);
-        // testStudent.setStartDate(LocalDate.now().minusWeeks(10)); // Example: started 10 weeks ago
-        // testStudent.setWeeksInProgram(10L); // Example weeks in program
-        
-        // Add the test student to the model
-        model.addAttribute("student", testStudent);
-        
-        // You can also add other test attributes
-        model.addAttribute("currentDate", LocalDate.now());
         
         return "dashboard";
     }
