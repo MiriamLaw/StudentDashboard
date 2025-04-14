@@ -9,13 +9,18 @@
     <style>
         .form-signin {
             max-width: 400px;
+            margin: 0 auto;
         }
         .oauth-container {
-            margin-top: 30px;
+            max-width: 400px;
+            margin: 30px auto;
         }
         .btn-google {
             background-color: #dd4b39;
             color: white;
+        }
+        .auth-title {
+            margin-bottom: 25px;
         }
     </style>
 </head>
@@ -31,7 +36,7 @@
     </div>
     
     <form class="form-signin" method="post" action="/login">
-        <h2 class="form-signin-heading">Please sign in</h2>
+        <h2 class="form-signin-heading auth-title">Please sign in</h2>
         
         <div th:if="${param.error}" class="alert alert-danger">
             <p>Invalid username or password.</p>
@@ -60,12 +65,38 @@
     </form>
     
     <div class="oauth-container text-center">
-        <h4 class="mb-3">OR</h4>
+        <div class="auth-divider">
+            <span>OR</span>
+        </div>
         <a href="/oauth2/authorization/google" class="btn btn-google btn-lg">
             <img src="https://developers.google.com/identity/images/g-logo.png" alt="Google" width="18" height="18" class="mr-2">
             Sign in with Google
         </a>
     </div>
 </div>
+
+<style>
+    .auth-divider {
+        text-align: center;
+        margin: 15px 0;
+        position: relative;
+    }
+    .auth-divider:before {
+        content: "";
+        position: absolute;
+        top: 50%;
+        left: 0;
+        width: 100%;
+        height: 1px;
+        background: #dee2e6;
+    }
+    .auth-divider span {
+        position: relative;
+        background: #fff;
+        padding: 0 15px;
+        font-size: 14px;
+        color: #6c757d;
+    }
+</style>
 </body>
 </html> 

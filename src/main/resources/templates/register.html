@@ -9,13 +9,18 @@
     <style>
         .form-signin {
             max-width: 400px;
+            margin: 0 auto;
         }
         .oauth-container {
-            margin-top: 30px;
+            max-width: 400px;
+            margin: 30px auto;
         }
         .btn-google {
             background-color: #dd4b39;
             color: white;
+        }
+        .auth-title {
+            margin-bottom: 25px;
         }
     </style>
 </head>
@@ -26,8 +31,8 @@
         <p><a href="/" class="text-decoration-none">← Back to home</a></p>
     </div>
     
-    <form class="form-signin" method="post" action="/register">
-        <h2 class="form-signin-heading">Create an Account</h2>
+    <form class="form-signin" method="post" action="/register" th:object="${student}">
+        <h2 class="form-signin-heading auth-title">Create an Account</h2>
         
         <div th:if="${error}" class="alert alert-danger">
             <p th:text="${error}"></p>
@@ -35,22 +40,22 @@
         
         <p>
             <label for="name" class="sr-only">Full Name</label>
-            <input type="text" id="name" name="name" class="form-control" placeholder="Full Name" required autofocus>
+            <input type="text" id="name" name="name" th:field="*{name}" class="form-control" placeholder="Full Name" required autofocus>
         </p>
         
         <p>
             <label for="email" class="sr-only">Email</label>
-            <input type="email" id="email" name="email" class="form-control" placeholder="Email" required>
+            <input type="email" id="email" name="email" th:field="*{email}" class="form-control" placeholder="Email" required>
         </p>
         
         <p>
             <label for="password" class="sr-only">Password</label>
-            <input type="password" id="password" name="password" class="form-control" placeholder="Password" required>
+            <input type="password" id="password" name="password" th:field="*{password}" class="form-control" placeholder="Password" required>
         </p>
         
         <p>
             <label for="confirmPassword" class="sr-only">Confirm Password</label>
-            <input type="password" id="confirmPassword" name="confirmPassword" class="form-control" placeholder="Confirm Password" required>
+            <input type="password" id="confirmPassword" name="confirmPassword" th:field="*{confirmPassword}" class="form-control" placeholder="Confirm Password" required>
         </p>
         
         <input name="_csrf" type="hidden" th:value="${_csrf.token}" />
@@ -62,12 +67,38 @@
     </form>
     
     <div class="oauth-container text-center">
-        <h4 class="mb-3">OR</h4>
+        <div class="auth-divider">
+            <span>OR</span>
+        </div>
         <a href="/oauth2/authorization/google" class="btn btn-google btn-lg">
             <img src="https://developers.google.com/identity/images/g-logo.png" alt="Google" width="18" height="18" class="mr-2">
             Sign in with Google
         </a>
     </div>
 </div>
+
+<style>
+    .auth-divider {
+        text-align: center;
+        margin: 15px 0;
+        position: relative;
+    }
+    .auth-divider:before {
+        content: "";
+        position: absolute;
+        top: 50%;
+        left: 0;
+        width: 100%;
+        height: 1px;
+        background: #dee2e6;
+    }
+    .auth-divider span {
+        position: relative;
+        background: #fff;
+        padding: 0 15px;
+        font-size: 14px;
+        color: #6c757d;
+    }
+</style>
 </body>
 </html> 

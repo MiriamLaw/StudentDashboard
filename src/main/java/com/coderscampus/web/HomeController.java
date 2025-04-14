@@ -29,7 +29,10 @@ public class HomeController {
 
     @GetMapping("/register")
     public String showRegistrationForm(Model model) {
-        model.addAttribute("student", new Student());
+        // If student is not in model, add it
+        if (!model.containsAttribute("student")) {
+            model.addAttribute("student", new Student());
+        }
         return "register";
     }
     
@@ -45,9 +48,15 @@ public class HomeController {
         }
         
         try {
-            studentService.registerNewStudent(student);
-            redirectAttributes.addFlashAttribute("message", "Registration successful! Please login.");
-            return "redirect:/login";
+            Student registeredStudent = studentService.registerNewStudent(student);
+            if (registeredStudent != null) {
+                redirectAttributes.addFlashAttribute("message", 
+                    "Registration successful! Please login with your email and password.");
+                return "redirect:/login";
+            } else {
+                model.addAttribute("error", "Registration failed. Please try again.");
+                return "register";
+            }
         } catch (IllegalArgumentException e) {
             model.addAttribute("error", e.getMessage());
             return "register";
@@ -57,7 +66,7 @@ public class HomeController {
     @GetMapping("/dashboard")
     public String dashboard(Model model, @AuthenticationPrincipal OAuth2User principal) {
         if (principal == null) {
-            return "redirect:/";  // Redirect to login if not authenticated
+            return "redirect:/login";
         }
         
         String email = principal.getAttribute("email");

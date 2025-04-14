@@ -42,11 +42,13 @@ public class SecurityConfig {
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .authorizeHttpRequests(auth -> {
                     auth.requestMatchers("/").permitAll();
-                    auth.requestMatchers("/register").permitAll(); // Allow access to registration
+                    auth.requestMatchers("/login").permitAll();
+                    auth.requestMatchers("/register").permitAll();
+                    auth.requestMatchers("/css/**", "/js/**", "/images/**").permitAll();
                     auth.requestMatchers("/api/auth/**").permitAll(); // Allow access to auth endpoints
                     auth.requestMatchers("/h2-console/**").permitAll(); // Allow access to H2 console
                     auth.requestMatchers("/admin/**").hasRole("ADMIN"); // Only admins can access /admin/**
-                    auth.requestMatchers("/user/**").hasRole("USER");   // Only users can access /user/**
+                    auth.requestMatchers("/dashboard/**", "/milestones/**", "/reports/**", "/profile/**").authenticated();
                     auth.anyRequest().authenticated();
                 })
                 .csrf(csrf -> csrf
@@ -55,14 +57,18 @@ public class SecurityConfig {
                 .headers(headers -> headers
                         .frameOptions(frame -> frame.disable())) // Disable frame options for H2 console
                 .oauth2Login(oauth2 -> oauth2
+                        .loginPage("/login")
                         .defaultSuccessUrl("/dashboard", true))
                 .formLogin(form -> form
                         .loginPage("/login")
                         .permitAll()
                         .defaultSuccessUrl("/dashboard", true))
                 .logout(logout -> logout
-                        .permitAll()
-                        .logoutSuccessUrl("/login?logout"))
+                        .logoutUrl("/logout") // This is the default value
+                        .logoutSuccessUrl("/login?logout")
+                        .invalidateHttpSession(true)
+                        .clearAuthentication(true)
+                        .permitAll())
                 .build();
     }
 }
