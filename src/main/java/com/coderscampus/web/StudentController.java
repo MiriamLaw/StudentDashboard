@@ -1,55 +1,82 @@
 package com.coderscampus.web;
 
-import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import com.coderscampus.domain.Student;
+import com.coderscampus.service.StudentService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 @RestController
-@RequestMapping("/students")  // Base path for all student-related endpoints
+@RequestMapping("/api/students")
 public class StudentController {
 
-    @GetMapping("/")
-    public String home(Model model) {
-        model.addAttribute("pageTitle", "Home");
-        return "index";
+    @Autowired
+    private StudentService studentService;
+    
+    @GetMapping
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<List<Student>> getAllStudents() {
+        return ResponseEntity.ok(studentService.getAllStudents());
     }
-
-    @GetMapping("/dashboard")
-    public String secured(Model model) {
-        model.addAttribute("pageTitle", "Dashboard");
-        return "dashboard";
+    
+    @GetMapping("/{id}")
+    public ResponseEntity<?> getStudentById(@PathVariable Long id) {
+        try {
+            Student student = studentService.getStudentById(id);
+            return ResponseEntity.ok(student);
+        } catch (IllegalArgumentException e) {
+            Map<String, String> response = new HashMap<>();
+            response.put("error", e.getMessage());
+            return ResponseEntity.badRequest().body(response);
+        }
     }
-
-    @GetMapping("/admin")
-    public String admin(Model model) {
-        // The admin page is restricted to users with ROLE_ADMIN.
-        model.addAttribute("pageTitle", "Admin Dashboard");
-        return "admin";
+    
+    @PutMapping("/{id}")
+    public ResponseEntity<?> updateStudent(@PathVariable Long id, @RequestBody Student studentDetails) {
+        try {
+            Student updatedStudent = studentService.updateStudent(id, studentDetails);
+            return ResponseEntity.ok(updatedStudent);
+        } catch (IllegalArgumentException e) {
+            Map<String, String> response = new HashMap<>();
+            response.put("error", e.getMessage());
+            return ResponseEntity.badRequest().body(response);
+        }
     }
-
-    @GetMapping("/profile")
-    public String viewProfile(Model model) {
-        model.addAttribute("pageTitle", "Student Profile");
-        return "profile";
+    
+    @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<?> deleteStudent(@PathVariable Long id) {
+        try {
+            studentService.deleteStudent(id);
+            Map<String, String> response = new HashMap<>();
+            response.put("message", "Student deleted successfully");
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            Map<String, String> response = new HashMap<>();
+            response.put("error", e.getMessage());
+            return ResponseEntity.badRequest().body(response);
+        }
     }
-
-    @GetMapping("/milestones")
-    public String viewMilestones(Model model) {
-        model.addAttribute("pageTitle", "My Milestones");
-        return "milestones";
-    }
-
-    @GetMapping("/reports")
-    public String viewReports(Model model) {
-        model.addAttribute("pageTitle", "My Reports");
-        return "reports";
-    }
-
-    // Optional: Add an endpoint for viewing progress/statistics
-    @GetMapping("/progress")
-    public String viewProgress(Model model) {
-        model.addAttribute("pageTitle", "My Progress");
-        return "progress";
+    
+    @PostMapping("/{id}/change-password")
+    public ResponseEntity<?> changePassword(
+            @PathVariable Long id,
+            @RequestParam String oldPassword,
+            @RequestParam String newPassword) {
+        try {
+            studentService.changePassword(id, oldPassword, newPassword);
+            Map<String, String> response = new HashMap<>();
+            response.put("message", "Password changed successfully");
+            return ResponseEntity.ok(response);
+        } catch (IllegalArgumentException e) {
+            Map<String, String> response = new HashMap<>();
+            response.put("error", e.getMessage());
+            return ResponseEntity.badRequest().body(response);
+        }
     }
 }

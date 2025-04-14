@@ -3,6 +3,7 @@ package com.coderscampus.domain;
 import jakarta.persistence.*;
 
 import java.time.Instant;
+import java.time.LocalDate;
 
 @Entity
 @Table(name = "milestone")
@@ -13,13 +14,13 @@ public class Milestone {
     private Long id;
 
     @ManyToOne
-    @JoinColumn(name = "student_id", nullable = false)
+    @JoinColumn(name = "student_id")
     private Student student;
 
     private String milestoneName;
-    private Instant completionDate;
+    private LocalDate completionDate;
     @Enumerated(EnumType.STRING)
-    private Status status;
+    private MilestoneStatus status = MilestoneStatus.IN_PROGRESS;
     @Column(length = 500)
     private String comment;
 
@@ -47,19 +48,19 @@ public class Milestone {
         this.milestoneName = milestoneName;
     }
 
-    public Instant getCompletionDate() {
+    public LocalDate getCompletionDate() {
         return completionDate;
     }
 
-    public void setCompletionDate(Instant completionDate) {
+    public void setCompletionDate(LocalDate completionDate) {
         this.completionDate = completionDate;
     }
 
-    public Status getStatus() {
+    public MilestoneStatus getStatus() {
         return status;
     }
 
-    public void setStatus(Status status) {
+    public void setStatus(MilestoneStatus status) {
         this.status = status;
     }
 
@@ -71,11 +72,8 @@ public class Milestone {
         this.comment = comment;
     }
 
-    public enum Status {
-        NOT_STARTED,
-        IN_PROGRESS,
-        COMPLETED,
-        ON_HOLD
+    public enum MilestoneStatus {
+        COMPLETED, IN_PROGRESS
     }
 
 }

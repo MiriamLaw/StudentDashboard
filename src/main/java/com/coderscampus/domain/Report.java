@@ -16,9 +16,9 @@ public class Report {
     private Student student;
 
     private LocalDate reportDate;
-    private String vimeoHoursSummary;
-    private String assignmentSummary;
-    private Double engagementScore;
+    private Double vimeoHoursSummary;
+    private String assignmentsSummary;
+    private Integer engagementScore;
     private String notes;
 
     public Long getId() {
@@ -45,27 +45,27 @@ public class Report {
         this.reportDate = reportDate;
     }
 
-    public String getVimeoHoursSummary() {
+    public Double getVimeoHoursSummary() {
         return vimeoHoursSummary;
     }
 
-    public void setVimeoHoursSummary(String vimeoHoursSummary) {
+    public void setVimeoHoursSummary(Double vimeoHoursSummary) {
         this.vimeoHoursSummary = vimeoHoursSummary;
     }
 
-    public String getAssignmentSummary() {
-        return assignmentSummary;
+    public String getAssignmentsSummary() {
+        return assignmentsSummary;
     }
 
-    public void setAssignmentSummary(String assignmentSummary) {
-        this.assignmentSummary = assignmentSummary;
+    public void setAssignmentsSummary(String assignmentsSummary) {
+        this.assignmentsSummary = assignmentsSummary;
     }
 
-    public Double getEngagementScore() {
+    public Integer getEngagementScore() {
         return engagementScore;
     }
 
-    public void setEngagementScore(Double engagementScore) {
+    public void setEngagementScore(Integer engagementScore) {
         this.engagementScore = engagementScore;
     }
 
