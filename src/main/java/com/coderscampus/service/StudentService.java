@@ -5,6 +5,8 @@ import com.coderscampus.domain.ProfileSettings;
 import com.coderscampus.domain.Student;
 import com.coderscampus.repository.ProfileSettingsRepository;
 import com.coderscampus.repository.StudentRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.User;
@@ -24,6 +26,8 @@ import java.util.Optional;
 @Service
 public class StudentService implements UserDetailsService {
 
+    private static final Logger logger = LoggerFactory.getLogger(StudentService.class);
+
     @Autowired
     private StudentRepository studentRepository;
     
@@ -34,15 +38,25 @@ public class StudentService implements UserDetailsService {
     private PasswordEncoder passwordEncoder;
     
     @Override
-    public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
-        Student student = studentRepository.findByEmail(email)
-                .orElseThrow(() -> new UsernameNotFoundException("User not found with email: " + email));
+    public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
+        logger.info("Attempting to load user with username/email: {}", username);
         
-        return new User(
-            student.getEmail(),
-            student.getPassword(),
-            Collections.singletonList(new SimpleGrantedAuthority(student.getRole()))
-        );
+        try {
+            // Try to find by email
+            Student student = studentRepository.findByEmail(username)
+                    .orElseThrow(() -> new UsernameNotFoundException("User not found with email: " + username));
+            
+            logger.info("Successfully loaded user: {}", student.getEmail());
+            
+            return new User(
+                student.getEmail(),
+                student.getPassword(),
+                Collections.singletonList(new SimpleGrantedAuthority(student.getRole()))
+            );
+        } catch (Exception e) {
+            logger.error("Error loading user: {}", e.getMessage());
+            throw e;
+        }
     }
     
     @Transactional

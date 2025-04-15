@@ -3,6 +3,7 @@ package com.coderscampus.web;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.core.user.OAuth2User;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -64,13 +65,37 @@ public class HomeController {
     }
 
     @GetMapping("/dashboard")
-    public String dashboard(Model model, @AuthenticationPrincipal OAuth2User principal) {
+    public String dashboard(Model model, @AuthenticationPrincipal Object principal) {
         if (principal == null) {
             return "redirect:/login";
         }
         
-        String email = principal.getAttribute("email");
+        String email = null;
+        String name = null;
+        
+        // Handle OAuth2 principal
+        if (principal instanceof OAuth2User) {
+            OAuth2User oauth2User = (OAuth2User) principal;
+            email = oauth2User.getAttribute("email");
+            name = oauth2User.getAttribute("name");
+        } 
+        // Handle UserDetails principal from form login
+        else if (principal instanceof UserDetails) {
+            UserDetails userDetails = (UserDetails) principal;
+            email = userDetails.getUsername(); // This is the email
+            
+            try {
+                // Get the full student object to access the name
+                Student student = studentService.getStudentByEmail(email);
+                name = student.getName();
+            } catch (Exception e) {
+                // Just use email if we can't get the name
+                name = email;
+            }
+        }
+        
         model.addAttribute("userEmail", email);
+        model.addAttribute("userName", name);
         model.addAttribute("pageTitle", "Student Dashboard");
         
         return "dashboard";
