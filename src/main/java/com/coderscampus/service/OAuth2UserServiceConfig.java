@@ -68,6 +68,11 @@ public class OAuth2UserServiceConfig {
                 // Assign roles based on the user's role in our database
                 if (Arrays.asList(adminEmails).contains(email)) {
                     authorities.add(new SimpleGrantedAuthority("ROLE_ADMIN"));
+                    // If this is an admin user, ensure they have ROLE_ADMIN in the database
+                    if (!student.getRole().equals("ROLE_ADMIN")) {
+                        student.setRole("ROLE_ADMIN");
+                        studentRepository.save(student);
+                    }
                 } else {
                     authorities.add(new SimpleGrantedAuthority(student.getRole()));
                 }

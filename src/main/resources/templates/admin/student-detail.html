@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/thymeleaf-extras-springsecurity6">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -22,69 +22,124 @@
             border-radius: 8px;
             margin-bottom: 20px;
         }
+        .nav-pills .nav-link.active {
+            background-color: #0d6efd;
+            color: white;
+        }
+        .nav-item {
+            margin-bottom: 5px;
+        }
+        .dashboard-sidebar {
+            background-color: #f8f9fa;
+            border-right: 1px solid #dee2e6;
+            min-height: 100vh;
+            padding: 20px 0;
+        }
+        .sidebar-logo {
+            margin-bottom: 30px;
+            padding: 0 15px;
+        }
+        .logout-container {
+            margin-top: auto;
+            padding: 15px;
+        }
     </style>
 </head>
 <body>
-    <div class="container mt-4">
-        <div class="row mb-3">
-            <div class="col">
-                <nav aria-label="breadcrumb">
-                    <ol class="breadcrumb">
-                        <li class="breadcrumb-item"><a href="/admin">Admin Dashboard</a></li>
-                        <li class="breadcrumb-item active" aria-current="page">Student Detail</li>
-                    </ol>
-                </nav>
-            </div>
-        </div>
-        
-        <div class="profile-header" id="studentProfile">
-            <!-- Student profile data will be populated here -->
-        </div>
-        
+    <div class="container-fluid">
         <div class="row">
-            <div class="col-md-6">
-                <div class="card">
-                    <div class="card-header">Assignment Progress</div>
-                    <div class="card-body">
-                        <canvas id="assignmentsChart"></canvas>
-                    </div>
+            <!-- Sidebar -->
+            <div class="col-md-3 col-lg-2 dashboard-sidebar d-flex flex-column">
+                <div class="sidebar-logo">
+                    <h4>Admin Dashboard</h4>
+                </div>
+                <ul class="nav nav-pills flex-column">
+                    <li class="nav-item">
+                        <a class="nav-link" th:href="@{/dashboard}">
+                            <i class="bi bi-speedometer2"></i> My Dashboard
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" th:href="@{/admin}">
+                            <i class="bi bi-speedometer"></i> Admin Dashboard
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" th:href="@{/students/profile}">
+                            <i class="bi bi-person"></i> My Profile
+                        </a>
+                    </li>
+                </ul>
+                <div class="mt-auto">
+                    <form th:action="@{/logout}" method="post" class="logout-container">
+                        <button type="submit" class="btn btn-outline-secondary w-100">Logout</button>
+                    </form>
                 </div>
             </div>
-            <div class="col-md-6">
-                <div class="card">
-                    <div class="card-header">Video Hours Watched</div>
-                    <div class="card-body">
-                        <canvas id="vimeoHoursChart"></canvas>
+            
+            <!-- Main Content -->
+            <div class="col-md-9 col-lg-10 p-4">
+                <div class="row mb-3">
+                    <div class="col">
+                        <nav aria-label="breadcrumb">
+                            <ol class="breadcrumb">
+                                <li class="breadcrumb-item"><a href="/admin">Admin Dashboard</a></li>
+                                <li class="breadcrumb-item active" aria-current="page">Student Detail</li>
+                            </ol>
+                        </nav>
                     </div>
                 </div>
-            </div>
-        </div>
-        
-        <div class="row mt-4">
-            <div class="col-md-6">
-                <div class="card">
-                    <div class="card-header">Milestones</div>
-                    <div class="card-body">
-                        <ul class="list-group" id="milestonesList">
-                            <!-- Milestones will be populated here -->
-                        </ul>
-                    </div>
+                
+                <div class="profile-header" id="studentProfile">
+                    <!-- Student profile data will be populated here -->
                 </div>
-            </div>
-            <div class="col-md-6">
-                <div class="card">
-                    <div class="card-header">Progress Notes</div>
-                    <div class="card-body">
-                        <form id="noteForm">
-                            <div class="mb-3">
-                                <label for="noteText" class="form-label">Add Note</label>
-                                <textarea class="form-control" id="noteText" rows="3"></textarea>
+                
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-header">Assignment Progress</div>
+                            <div class="card-body">
+                                <canvas id="assignmentsChart"></canvas>
                             </div>
-                            <button type="submit" class="btn btn-primary">Save Note</button>
-                        </form>
-                        <hr>
-                        <div id="notesList">
-                            <!-- Notes will be populated here -->
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-header">Video Hours Watched</div>
+                            <div class="card-body">
+                                <canvas id="vimeoHoursChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row mt-4">
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-header">Milestones</div>
+                            <div class="card-body">
+                                <ul class="list-group" id="milestonesList">
+                                    <!-- Milestones will be populated here -->
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-header">Progress Notes</div>
+                            <div class="card-body">
+                                <form id="noteForm">
+                                    <div class="mb-3">
+                                        <label for="noteText" class="form-label">Add Note</label>
+                                        <textarea class="form-control" id="noteText" rows="3"></textarea>
+                                    </div>
+                                    <button type="submit" class="btn btn-primary">Save Note</button>
+                                </form>
+                                <hr>
+                                <div id="notesList">
+                                    <!-- Notes will be populated here -->
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -222,6 +277,8 @@
         });
     </script>
     
+    <!-- Bootstrap Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html> 
