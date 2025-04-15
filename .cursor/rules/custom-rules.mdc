@@ -1,0 +1,21 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+## IMPORTANT:
+- You have the permission to scan the entire codebase.
+- Work in a non-destructive way.
+– Always prefer simple solutions.
+– Avoid duplication of code whenever possible, which means checking for other areas of the codebase that might already have similar code and functionality.
+– Write code that takes into account the different environments: dev and prod.
+– You are careful to only make changes that are requested or you are confident are well understood and related to the change being requested.
+– When fixing an issue or bug, do not introduce a new pattern or technology without first exhausting all options for the existing implementation. And if you finally do this, make sure to remove the old implementation afterwards so we don't have duplicate logic.  
+– Keep the codebase very clean and organized.
+– Avoid having files over 200–300 lines of code. Refactor at that point.  
+– Mocking data is only needed for tests, never mock data for dev or prod unless prompted to do so  
+– Never add stubbing or fake data patterns to code that affects the dev or prod environments  
+– Never overwrite my .env file without first asking and confirming
+- Do not start/restart either back or front end on your own in the terminal.
+- Do not attempt to deploy or push code to git.
+- If changes are implemented on the front-end, run a "npm run build" when you finish adding code to check if there are any unused methods or issues.
