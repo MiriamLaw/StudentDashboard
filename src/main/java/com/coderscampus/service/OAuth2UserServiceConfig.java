@@ -55,32 +55,29 @@ public class OAuth2UserServiceConfig {
         DefaultOAuth2UserService delegate = new DefaultOAuth2UserService();
 
         return userRequest -> {
-            // Load user information from the OAuth2 provider
-            OAuth2User oAuth2User = delegate.loadUser(userRequest);
-            Map<String, Object> attributes = oAuth2User.getAttributes();
+            OAuth2User oauth2User = delegate.loadUser(userRequest);
+            Map<String, Object> attributes = oauth2User.getAttributes();
             
-            // Get user's email and name
+            // Extract email and name from attributes
             String email = (String) attributes.get("email");
             String name = (String) attributes.get("name");
             
             logger.info("OAuth2 login attempt - Email: {}, Name: {}", email, name);
             logger.info("Admin emails configured: {}", Arrays.toString(adminEmails));
-            logger.info("Is admin email? {}", Arrays.asList(adminEmails).contains(email));
             
-            // First, directly check if email is in admin list
+            // Check if this is an admin email
             boolean isAdminEmail = email != null && Arrays.asList(adminEmails).contains(email);
+            logger.info("Is admin email? {}", isAdminEmail);
             
-            // Store user in database
-            Student student = null;
+            // Save/update the user in the database
             if (email != null && name != null) {
-                student = processOAuth2User(email, name, isAdminEmail);
-                logger.info("Student record from DB - Email: {}, Role: {}", student.getEmail(), student.getRole());
+                processOAuth2User(email, name, isAdminEmail);
             }
             
-            // Build authorities based on admin check AND database role
+            // Create authorities set
             Set<SimpleGrantedAuthority> authorities = new HashSet<>();
             
-            // Always check if this is an admin email - this is our source of truth
+            // Always use the admin email list as the source of truth
             if (isAdminEmail) {
                 logger.info("Adding ROLE_ADMIN authority based on admin email list");
                 authorities.add(new SimpleGrantedAuthority("ROLE_ADMIN"));
@@ -89,15 +86,13 @@ public class OAuth2UserServiceConfig {
                 authorities.add(new SimpleGrantedAuthority("ROLE_USER"));
             }
             
-            // Create new OAuth2User with our authorities
-            DefaultOAuth2User customOAuth2User = new DefaultOAuth2User(
-                authorities, 
-                attributes, 
-                "email" // Using email as the name attribute key
-            );
+            // Ensure email is in the attributes map for proper DefaultOAuth2User creation
+            if (email != null && !attributes.containsKey("email")) {
+                attributes.put("email", email);
+            }
             
-            logger.info("Created OAuth2User with authorities: {}", authorities);
-            return customOAuth2User;
+            // Google OAuth2 uses "sub" as the nameAttributeKey
+            return new DefaultOAuth2User(authorities, attributes, "sub");
         };
     }
     
@@ -110,14 +105,11 @@ public class OAuth2UserServiceConfig {
             Student student = existingStudent.get();
             logger.info("Found existing student with email: {} and role: {}", email, student.getRole());
             
-            // Always update role based on admin email list
-            if (isAdmin && !student.getRole().equals("ROLE_ADMIN")) {
-                logger.info("Updating role to ROLE_ADMIN for user: {}", email);
-                student.setRole("ROLE_ADMIN");
-                studentRepository.save(student);
-            } else if (!isAdmin && !student.getRole().equals("ROLE_USER")) {
-                logger.info("Updating role to ROLE_USER for user: {}", email);
-                student.setRole("ROLE_USER");
+            // Update role if needed
+            String expectedRole = isAdmin ? "ROLE_ADMIN" : "ROLE_USER";
+            if (!student.getRole().equals(expectedRole)) {
+                logger.info("Updating role to {} for user: {}", expectedRole, email);
+                student.setRole(expectedRole);
                 studentRepository.save(student);
             }
             
