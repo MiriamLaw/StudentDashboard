@@ -4,6 +4,8 @@ import com.coderscampus.domain.ProfileSettings;
 import com.coderscampus.domain.Student;
 import com.coderscampus.repository.ProfileSettingsRepository;
 import com.coderscampus.repository.StudentRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -19,6 +21,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Optional;
@@ -32,6 +35,8 @@ import java.util.Set;
 
 @Configuration
 public class OAuth2UserServiceConfig {
+
+    private static final Logger logger = LoggerFactory.getLogger(OAuth2UserServiceConfig.class);
 
     @Value("${admin.emails}")
     private String[] adminEmails;
@@ -50,57 +55,89 @@ public class OAuth2UserServiceConfig {
         DefaultOAuth2UserService delegate = new DefaultOAuth2UserService();
 
         return userRequest -> {
-            // Load user information from the OAuth2 provider (Google in this example)
+            // Load user information from the OAuth2 provider
             OAuth2User oAuth2User = delegate.loadUser(userRequest);
             Map<String, Object> attributes = oAuth2User.getAttributes();
             
-            // Get user's email and name from the OAuth2 provider's attributes
+            // Get user's email and name
             String email = (String) attributes.get("email");
             String name = (String) attributes.get("name");
             
-            // Initialize the set of authorities
-            Set<SimpleGrantedAuthority> authorities = new HashSet<>();
-
-            // Store/update the user in our database
+            logger.info("OAuth2 login attempt - Email: {}, Name: {}", email, name);
+            logger.info("Admin emails configured: {}", Arrays.toString(adminEmails));
+            logger.info("Is admin email? {}", Arrays.asList(adminEmails).contains(email));
+            
+            // First, directly check if email is in admin list
+            boolean isAdminEmail = email != null && Arrays.asList(adminEmails).contains(email);
+            
+            // Store user in database
+            Student student = null;
             if (email != null && name != null) {
-                Student student = processOAuth2User(email, name);
-                
-                // Assign roles based on the user's role in our database
-                if (Arrays.asList(adminEmails).contains(email)) {
-                    authorities.add(new SimpleGrantedAuthority("ROLE_ADMIN"));
-                    // If this is an admin user, ensure they have ROLE_ADMIN in the database
-                    if (!student.getRole().equals("ROLE_ADMIN")) {
-                        student.setRole("ROLE_ADMIN");
-                        studentRepository.save(student);
-                    }
-                } else {
-                    authorities.add(new SimpleGrantedAuthority(student.getRole()));
-                }
+                student = processOAuth2User(email, name, isAdminEmail);
+                logger.info("Student record from DB - Email: {}, Role: {}", student.getEmail(), student.getRole());
+            }
+            
+            // Build authorities based on admin check AND database role
+            Set<SimpleGrantedAuthority> authorities = new HashSet<>();
+            
+            // Always check if this is an admin email - this is our source of truth
+            if (isAdminEmail) {
+                logger.info("Adding ROLE_ADMIN authority based on admin email list");
+                authorities.add(new SimpleGrantedAuthority("ROLE_ADMIN"));
             } else {
-                // Default role if we can't determine the user
+                logger.info("Adding ROLE_USER authority (not in admin email list)");
                 authorities.add(new SimpleGrantedAuthority("ROLE_USER"));
             }
-
-            // Return a new user with the assigned roles and Google's identifier ("sub")
-            return new DefaultOAuth2User(authorities, attributes, "sub");
+            
+            // Create new OAuth2User with our authorities
+            DefaultOAuth2User customOAuth2User = new DefaultOAuth2User(
+                authorities, 
+                attributes, 
+                "email" // Using email as the name attribute key
+            );
+            
+            logger.info("Created OAuth2User with authorities: {}", authorities);
+            return customOAuth2User;
         };
     }
     
     @Transactional
-    private Student processOAuth2User(String email, String name) {
+    private Student processOAuth2User(String email, String name, boolean isAdmin) {
         // Check if user already exists
         Optional<Student> existingStudent = studentRepository.findByEmail(email);
         
         if (existingStudent.isPresent()) {
-            // User exists, return the existing user
-            return existingStudent.get();
+            Student student = existingStudent.get();
+            logger.info("Found existing student with email: {} and role: {}", email, student.getRole());
+            
+            // Always update role based on admin email list
+            if (isAdmin && !student.getRole().equals("ROLE_ADMIN")) {
+                logger.info("Updating role to ROLE_ADMIN for user: {}", email);
+                student.setRole("ROLE_ADMIN");
+                studentRepository.save(student);
+            } else if (!isAdmin && !student.getRole().equals("ROLE_USER")) {
+                logger.info("Updating role to ROLE_USER for user: {}", email);
+                student.setRole("ROLE_USER");
+                studentRepository.save(student);
+            }
+            
+            return student;
         } else {
-            // Create a new user from OAuth2 data
+            logger.info("Creating new student with email: {}", email);
+            // Create new user
             Student newStudent = new Student();
             newStudent.setEmail(email);
             newStudent.setName(name);
-            // OAuth2 users don't have a password in our database since they authenticate through the provider
             newStudent.setPassword(passwordEncoder.encode(java.util.UUID.randomUUID().toString()));
+            
+            // Set role based on admin check
+            if (isAdmin) {
+                logger.info("Setting role to ROLE_ADMIN for new user: {}", email);
+                newStudent.setRole("ROLE_ADMIN");
+            } else {
+                logger.info("Setting role to ROLE_USER for new user: {}", email);
+                newStudent.setRole("ROLE_USER");
+            }
             
             // Set default values
             newStudent.setStartDate(LocalDate.now());
@@ -111,8 +148,9 @@ public class OAuth2UserServiceConfig {
             
             // Save student
             Student savedStudent = studentRepository.save(newStudent);
+            logger.info("Saved new student with ID: {} and role: {}", savedStudent.getId(), savedStudent.getRole());
             
-            // Create default profile settings
+            // Create profile settings
             ProfileSettings profileSettings = new ProfileSettings();
             profileSettings.setStudent(savedStudent);
             profileSettingsRepository.save(profileSettings);

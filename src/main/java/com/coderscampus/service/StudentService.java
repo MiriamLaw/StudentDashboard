@@ -31,7 +31,7 @@ public class StudentService implements UserDetailsService {
 
     @Autowired
     private StudentRepository studentRepository;
-    
+
     @Autowired
     private ProfileSettingsRepository profileSettingsRepository;
     

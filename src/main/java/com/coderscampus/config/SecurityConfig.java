@@ -6,6 +6,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
 import org.springframework.security.oauth2.client.userinfo.OAuth2UserRequest;
 import org.springframework.security.oauth2.client.userinfo.OAuth2UserService;
 import org.springframework.security.oauth2.core.user.OAuth2User;
@@ -25,6 +26,9 @@ public class SecurityConfig {
 
     @Autowired
     private OAuth2UserService<OAuth2UserRequest, OAuth2User> oauth2UserService;
+    
+    @Autowired
+    private ClientRegistrationRepository clientRegistrationRepository;
 
     @Bean
     CorsConfigurationSource corsConfigurationSource() {
@@ -61,6 +65,9 @@ public class SecurityConfig {
                 .oauth2Login(oauth2 -> oauth2
                         .loginPage("/login")
                         .userInfoEndpoint(userInfo -> userInfo.userService(oauth2UserService))
+                        .authorizationEndpoint(authEndpoint -> 
+                            authEndpoint.authorizationRequestResolver(
+                                new CustomAuthorizationRequestResolver(clientRegistrationRepository)))
                         .successHandler((request, response, authentication) -> {
                             // Redirect to frontend after successful OAuth2 login
                             response.sendRedirect("/dashboard");
