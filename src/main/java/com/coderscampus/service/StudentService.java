@@ -3,6 +3,7 @@ package com.coderscampus.service;
 import com.coderscampus.domain.Milestone;
 import com.coderscampus.domain.ProfileSettings;
 import com.coderscampus.domain.Student;
+import com.coderscampus.repository.MilestoneRepository;
 import com.coderscampus.repository.ProfileSettingsRepository;
 import com.coderscampus.repository.StudentRepository;
 import org.slf4j.Logger;
@@ -33,6 +34,9 @@ public class StudentService implements UserDetailsService {
     
     @Autowired
     private ProfileSettingsRepository profileSettingsRepository;
+    
+    @Autowired
+    private MilestoneRepository milestoneRepository;
     
     @Autowired
     private PasswordEncoder passwordEncoder;
@@ -151,5 +155,49 @@ public class StudentService implements UserDetailsService {
         // Set new password
         student.setPassword(passwordEncoder.encode(newPassword));
         studentRepository.save(student);
+    }
+    
+    @Transactional
+    public void createSampleData() {
+        // Check if we already have students
+        if (studentRepository.count() > 0) {
+            return; // Don't add sample data if we already have students
+        }
+        
+        // Create 5 sample students
+        for (int i = 1; i <= 5; i++) {
+            Student student = new Student();
+            student.setName("Student " + i);
+            student.setEmail("student" + i + "@example.com");
+            student.setPassword(passwordEncoder.encode("password"));
+            student.setStartDate(LocalDate.now().minusWeeks(i * 2));
+            student.setWeeksInBootcamp(i * 2);
+            student.setAssignmentsSubmitted(5 * i);
+            student.setAssignmentsExpected(7 * i);
+            student.setVimeoHoursWatched(10.0 * i);
+            student.setLastAssignmentDate(LocalDate.now().minusDays(i));
+            
+            Student savedStudent = studentRepository.save(student);
+            
+            // Create profile settings for the student
+            ProfileSettings profileSettings = new ProfileSettings();
+            profileSettings.setStudent(savedStudent);
+            profileSettings.setNotificationsEnabled(true);
+            profileSettings.setThemePreference("light");
+            profileSettingsRepository.save(profileSettings);
+            
+            // Create some milestones
+            for (int j = 1; j <= 3; j++) {
+                Milestone milestone = new Milestone();
+                milestone.setStudent(savedStudent);
+                milestone.setMilestoneName("Milestone " + j + " for Student " + i);
+                milestone.setStatus(j < 2 ? Milestone.MilestoneStatus.COMPLETED : Milestone.MilestoneStatus.IN_PROGRESS);
+                if (j < 2) {
+                    milestone.setCompletionDate(LocalDate.now().minusDays(j * 5));
+                }
+                milestone.setComment("This is a sample milestone");
+                milestoneRepository.save(milestone);
+            }
+        }
     }
 }

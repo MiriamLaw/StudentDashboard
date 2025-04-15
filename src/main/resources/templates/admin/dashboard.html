@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        .card {
+            margin-bottom: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .card-header {
+            font-weight: bold;
+            background-color: #f8f9fa;
+        }
+        .stats-card {
+            text-align: center;
+            padding: 10px;
+        }
+        .stats-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #007bff;
+        }
+        .stats-label {
+            font-size: 14px;
+            color: #6c757d;
+        }
+    </style>
+</head>
+<body>
+    <div class="container mt-4">
+        <div class="row mb-4">
+            <div class="col">
+                <h1>Admin Dashboard</h1>
+                <p>Welcome to the administrative dashboard for the Student Bootcamp Management System.</p>
+            </div>
+        </div>
+        
+        <div class="row mb-4">
+            <div class="col-md-3">
+                <div class="card stats-card">
+                    <div class="stats-value" id="totalStudents">-</div>
+                    <div class="stats-label">Total Students</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card stats-card">
+                    <div class="stats-value" id="assignmentCompletionRate">-</div>
+                    <div class="stats-label">Assignment Completion Rate</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card stats-card">
+                    <div class="stats-value" id="averageAssignments">-</div>
+                    <div class="stats-label">Avg Assignments Submitted</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card stats-card">
+                    <div class="stats-value" id="averageVimeoHours">-</div>
+                    <div class="stats-label">Avg Video Hours Watched</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="row">
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">Assignments Overview</div>
+                    <div class="card-body">
+                        <canvas id="assignmentsChart"></canvas>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">Video Hours Watched</div>
+                    <div class="card-body">
+                        <canvas id="vimeoHoursChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="row mt-4">
+            <div class="col">
+                <div class="card">
+                    <div class="card-header">Student List</div>
+                    <div class="card-body">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Name</th>
+                                    <th>Email</th>
+                                    <th>Assignments</th>
+                                    <th>Video Hours</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="studentTableBody">
+                                <!-- Student data will be populated here -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // Fetch admin dashboard data
+        fetch('/api/admin/dashboard')
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Not authorized or server error');
+                }
+                return response.json();
+            })
+            .then(data => {
+                // Update statistics
+                document.getElementById('totalStudents').textContent = data.totalStudents;
+                document.getElementById('assignmentCompletionRate').textContent = data.assignmentCompletionRate.toFixed(1) + '%';
+                document.getElementById('averageAssignments').textContent = data.averageAssignmentsSubmitted.toFixed(1);
+                document.getElementById('averageVimeoHours').textContent = data.averageVimeoHours.toFixed(1);
+                
+                // Create assignment chart
+                const assignmentsCtx = document.getElementById('assignmentsChart').getContext('2d');
+                new Chart(assignmentsCtx, {
+                    type: 'bar',
+                    data: {
+                        labels: ['Submitted', 'Expected'],
+                        datasets: [{
+                            label: 'Assignments',
+                            data: [data.totalAssignmentsSubmitted, data.totalAssignmentsExpected],
+                            backgroundColor: [
+                                'rgba(75, 192, 192, 0.2)',
+                                'rgba(255, 99, 132, 0.2)'
+                            ],
+                            borderColor: [
+                                'rgba(75, 192, 192, 1)',
+                                'rgba(255, 99, 132, 1)'
+                            ],
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        scales: {
+                            y: {
+                                beginAtZero: true
+                            }
+                        }
+                    }
+                });
+                
+                // Create Vimeo hours chart
+                const vimeoHoursCtx = document.getElementById('vimeoHoursChart').getContext('2d');
+                new Chart(vimeoHoursCtx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['Total Hours Watched'],
+                        datasets: [{
+                            label: 'Video Hours',
+                            data: [data.totalVimeoHours, Math.max(100 - data.totalVimeoHours, 0)],
+                            backgroundColor: [
+                                'rgba(54, 162, 235, 0.2)',
+                                'rgba(200, 200, 200, 0.2)'
+                            ],
+                            borderColor: [
+                                'rgba(54, 162, 235, 1)',
+                                'rgba(200, 200, 200, 1)'
+                            ],
+                            borderWidth: 1
+                        }]
+                    }
+                });
+            })
+            .catch(error => {
+                console.error('Error fetching dashboard data:', error);
+                alert('You are not authorized to access this page or there was a server error.');
+                window.location.href = '/';
+            });
+            
+        // Fetch student list
+        fetch('/api/admin/students')
+            .then(response => response.json())
+            .then(students => {
+                const tableBody = document.getElementById('studentTableBody');
+                tableBody.innerHTML = '';
+                
+                students.forEach(student => {
+                    const row = document.createElement('tr');
+                    
+                    row.innerHTML = `
+                        <td>${student.id}</td>
+                        <td>${student.name}</td>
+                        <td>${student.email}</td>
+                        <td>${student.assignmentsSubmitted || 0} / ${student.assignmentsExpected || 0}</td>
+                        <td>${student.vimeoHoursWatched || 0}</td>
+                        <td>
+                            <a href="/admin/students/${student.id}" class="btn btn-sm btn-primary">View</a>
+                        </td>
+                    `;
+                    
+                    tableBody.appendChild(row);
+                });
+            })
+            .catch(error => {
+                console.error('Error fetching students:', error);
+            });
+    </script>
+    
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html> 

@@ -10,6 +10,8 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.PathVariable;
 
 import com.coderscampus.domain.Student;
 import com.coderscampus.service.StudentService;
@@ -102,15 +104,21 @@ public class HomeController {
     }
 
     @GetMapping("/admin")
-    public String admin(Model model) {
-        // The admin page is restricted to users with ROLE_ADMIN.
-        model.addAttribute("pageTitle", "Admin Dashboard");
-        return "admin";
+    @PreAuthorize("hasRole('ADMIN')")
+    public String adminDashboard() {
+        return "admin/dashboard";
     }
 
     @GetMapping("/login")
     public String login() {
         return "login";
+    }
+
+    @GetMapping("/admin/students/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public String studentDetail(@PathVariable Long id, Model model) {
+        model.addAttribute("studentId", id);
+        return "admin/student-detail";
     }
 
 }
