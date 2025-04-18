@@ -6,6 +6,8 @@
     <title>Dashboard - Student Dashboard</title>
     <!-- Add Bootstrap for quick styling -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         .nav-pills .nav-link.active {
             background-color: #0d6efd;
@@ -51,6 +53,24 @@
             width: 64px;
             height: 64px;
             border-radius: 50%;
+        }
+        .milestone-card {
+            border-radius: 10px;
+            margin-bottom: 15px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        .report-card {
+            border-radius: 10px;
+            margin-bottom: 10px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        .notes-editable {
+            cursor: pointer;
+            padding: 5px;
+            border-radius: 4px;
+        }
+        .notes-editable:hover {
+            background-color: #f8f9fa;
         }
     </style>
 </head>
@@ -104,13 +124,16 @@
                         <div class="card student-card">
                             <div class="card-body d-flex align-items-center">
                                 <div class="me-3">
-                                    <img src="https://ui-avatars.com/api/?name=Student&background=random" alt="Profile" class="avatar-image">
+                                    <img src="https://ui-avatars.com/api/?name=Student&background=random" alt="Profile" class="avatar-image" id="profileAvatar">
                                 </div>
                                 <div>
-                                    <h4 class="card-title">Welcome, <span th:text="${userName != null ? userName : userEmail}">Student</span>!</h4>
+                                    <h4 class="card-title">Welcome, <span id="studentName" th:text="${userName != null ? userName : userEmail}">Student</span>!</h4>
                                     <p class="card-text">
-                                        <span th:text="${userEmail}">user@example.com</span>
+                                        <span id="studentEmail" th:text="${userEmail}">user@example.com</span>
                                         <span class="badge bg-danger ms-2" th:if="${#authorization.expression('hasRole(''ADMIN'')')}">Admin</span>
+                                    </p>
+                                    <p class="text-muted mb-0">
+                                        <span id="startDate"></span> - Week <span id="weekNumber"></span>
                                     </p>
                                 </div>
                             </div>
@@ -121,76 +144,77 @@
                 <div class="row mb-4">
                     <div class="col-md-3">
                         <div class="stat-card bg-primary text-white">
-                            <div class="stat-value">85%</div>
-                            <div class="stat-label">Attendance</div>
+                            <div id="assignmentCompletionRate" class="stat-value">0%</div>
+                            <div class="stat-label">Assignment Progress</div>
                         </div>
                     </div>
                     <div class="col-md-3">
                         <div class="stat-card bg-success text-white">
-                            <div class="stat-value">12</div>
-                            <div class="stat-label">Assignments</div>
+                            <div id="assignmentsSubmitted" class="stat-value">0</div>
+                            <div class="stat-label">Assignments Completed</div>
                         </div>
                     </div>
                     <div class="col-md-3">
                         <div class="stat-card bg-info text-white">
-                            <div class="stat-value">8</div>
-                            <div class="stat-label">Milestones</div>
+                            <div id="milestoneCount" class="stat-value">0</div>
+                            <div class="stat-label">Milestones Completed</div>
                         </div>
                     </div>
                     <div class="col-md-3">
                         <div class="stat-card bg-warning text-dark">
-                            <div class="stat-value">24h</div>
+                            <div id="vimeoHours" class="stat-value">0h</div>
                             <div class="stat-label">Video Time</div>
                         </div>
                     </div>
                 </div>
                 
-                <div class="row">
-                    <div class="col-md-8">
+                <div class="row mb-4">
+                    <div class="col-md-6">
                         <div class="card">
-                            <div class="card-header">
-                                <h5 class="card-title mb-0">Recent Activity</h5>
+                            <div class="card-header d-flex justify-content-between align-items-center">
+                                <h5 class="card-title mb-0">Assignment Progress</h5>
                             </div>
                             <div class="card-body">
-                                <ul class="list-group list-group-flush">
-                                    <li class="list-group-item d-flex justify-content-between align-items-center">
-                                        Completed Assignment #12
-                                        <span class="badge bg-success rounded-pill">Today</span>
-                                    </li>
-                                    <li class="list-group-item d-flex justify-content-between align-items-center">
-                                        Watched 2 hours of tutorial videos
-                                        <span class="badge bg-primary rounded-pill">Yesterday</span>
-                                    </li>
-                                    <li class="list-group-item d-flex justify-content-between align-items-center">
-                                        Achieved Milestone: Basic Spring Security
-                                        <span class="badge bg-info rounded-pill">3 days ago</span>
-                                    </li>
-                                </ul>
+                                <canvas id="assignmentsChart"></canvas>
                             </div>
                         </div>
                     </div>
-                    <div class="col-md-4">
+                    <div class="col-md-6">
                         <div class="card">
-                            <div class="card-header">
-                                <h5 class="card-title mb-0">Upcoming Tasks</h5>
+                            <div class="card-header d-flex justify-content-between align-items-center">
+                                <h5 class="card-title mb-0">Weekly Video Progress</h5>
                             </div>
                             <div class="card-body">
-                                <ul class="list-group list-group-flush">
-                                    <li class="list-group-item">
-                                        <div class="d-flex w-100 justify-content-between">
-                                            <h6 class="mb-1">Assignment #13</h6>
-                                            <small class="text-muted">Due in 2 days</small>
-                                        </div>
-                                        <small>Spring Security Implementation</small>
-                                    </li>
-                                    <li class="list-group-item">
-                                        <div class="d-flex w-100 justify-content-between">
-                                            <h6 class="mb-1">Project Milestone</h6>
-                                            <small class="text-muted">Due in 5 days</small>
-                                        </div>
-                                        <small>Complete Authentication Flow</small>
-                                    </li>
-                                </ul>
+                                <canvas id="videoProgressChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-header d-flex justify-content-between align-items-center">
+                                <h5 class="card-title mb-0">Milestones</h5>
+                                <a href="/students/milestones" class="btn btn-sm btn-outline-primary">Manage</a>
+                            </div>
+                            <div class="card-body">
+                                <div id="milestonesList">
+                                    <p class="text-center text-muted">Loading milestones...</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-header d-flex justify-content-between align-items-center">
+                                <h5 class="card-title mb-0">Recent Reports</h5>
+                                <a href="/students/reports" class="btn btn-sm btn-outline-primary">View All</a>
+                            </div>
+                            <div class="card-body">
+                                <div id="recentReports">
+                                    <p class="text-center text-muted">Loading reports...</p>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -199,7 +223,303 @@
         </div>
     </div>
     
-    <!-- Bootstrap Icons -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css" rel="stylesheet">
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Fetch student dashboard data
+        document.addEventListener('DOMContentLoaded', function() {
+            fetch('/api/dashboard/student-data')
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Failed to fetch dashboard data');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    console.log('Dashboard data:', data);
+                    updateDashboard(data);
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Error loading dashboard data. Please try again later.');
+                });
+        });
+        
+        function updateDashboard(data) {
+            // Update profile section
+            document.getElementById('studentName').textContent = data.name || 'Student';
+            document.getElementById('studentEmail').textContent = data.email || '';
+            document.getElementById('profileAvatar').src = `https://ui-avatars.com/api/?name=${encodeURIComponent(data.name || 'Student')}&background=random`;
+            
+            // Format and display dates
+            if (data.startDate) {
+                const startDate = new Date(data.startDate);
+                document.getElementById('startDate').textContent = `Started ${startDate.toLocaleDateString()}`;
+            }
+            document.getElementById('weekNumber').textContent = data.weeksInBootcamp || '0';
+            
+            // Update stat cards
+            document.getElementById('assignmentCompletionRate').textContent = Math.round(data.assignmentCompletionRate || 0) + '%';
+            document.getElementById('assignmentsSubmitted').textContent = data.assignmentsSubmitted || '0';
+            document.getElementById('milestoneCount').textContent = (data.completedMilestones?.length || 0).toString();
+            document.getElementById('vimeoHours').textContent = (data.totalVimeoHours || 0).toFixed(1) + 'h';
+            
+            // Create assignment chart
+            const assignmentsCtx = document.getElementById('assignmentsChart').getContext('2d');
+            new Chart(assignmentsCtx, {
+                type: 'bar',
+                data: {
+                    labels: ['Submitted', 'Expected'],
+                    datasets: [{
+                        label: 'Assignments',
+                        data: [data.assignmentsSubmitted || 0, data.assignmentsExpected || 0],
+                        backgroundColor: [
+                            'rgba(40, 167, 69, 0.6)',
+                            'rgba(108, 117, 125, 0.3)'
+                        ],
+                        borderColor: [
+                            'rgba(40, 167, 69, 1)',
+                            'rgba(108, 117, 125, 0.8)'
+                        ],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    }
+                }
+            });
+            
+            // Create video progress chart
+            const videoProgressCtx = document.getElementById('videoProgressChart').getContext('2d');
+            const weeklyData = data.videoProgressByWeek || {};
+            
+            new Chart(videoProgressCtx, {
+                type: 'line',
+                data: {
+                    labels: Object.keys(weeklyData).sort(),
+                    datasets: [{
+                        label: 'Hours Watched',
+                        data: Object.keys(weeklyData).sort().map(week => weeklyData[week]),
+                        borderColor: 'rgba(54, 162, 235, 1)',
+                        backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                        borderWidth: 2,
+                        tension: 0.3,
+                        fill: true
+                    }]
+                },
+                options: {
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'Hours'
+                            }
+                        },
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'Week'
+                            }
+                        }
+                    }
+                }
+            });
+            
+            // Update milestones list
+            const milestonesList = document.getElementById('milestonesList');
+            milestonesList.innerHTML = '';
+            
+            if (data.completedMilestones?.length > 0 || data.inProgressMilestones?.length > 0) {
+                // First add in-progress milestones
+                if (data.inProgressMilestones?.length > 0) {
+                    data.inProgressMilestones.forEach(milestone => {
+                        const card = document.createElement('div');
+                        card.className = 'milestone-card card mb-2';
+                        
+                        card.innerHTML = `
+                            <div class="card-body py-2 px-3">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <h6 class="mb-0">${milestone.milestoneName}</h6>
+                                        <p class="text-muted mb-0 small">${milestone.comment || ''}</p>
+                                    </div>
+                                    <button class="btn btn-sm btn-outline-success complete-milestone-btn" 
+                                            data-milestone-id="${milestone.id}">
+                                        Mark Complete
+                                    </button>
+                                </div>
+                            </div>
+                        `;
+                        
+                        milestonesList.appendChild(card);
+                    });
+                }
+                
+                // Then add completed milestones
+                if (data.completedMilestones?.length > 0) {
+                    data.completedMilestones.forEach(milestone => {
+                        const card = document.createElement('div');
+                        card.className = 'milestone-card card mb-2';
+                        
+                        // Format completion date
+                        let completionDateText = '';
+                        if (milestone.completionDate) {
+                            const completionDate = new Date(milestone.completionDate);
+                            completionDateText = `Completed on ${completionDate.toLocaleDateString()}`;
+                        }
+                        
+                        card.innerHTML = `
+                            <div class="card-body py-2 px-3">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <h6 class="mb-0">${milestone.milestoneName}</h6>
+                                        <p class="text-muted mb-0 small">${completionDateText}</p>
+                                    </div>
+                                    <span class="badge bg-success">Completed</span>
+                                </div>
+                            </div>
+                        `;
+                        
+                        milestonesList.appendChild(card);
+                    });
+                }
+                
+                // Add event listeners to complete milestone buttons
+                document.querySelectorAll('.complete-milestone-btn').forEach(button => {
+                    button.addEventListener('click', function() {
+                        const milestoneId = this.getAttribute('data-milestone-id');
+                        completeMilestone(milestoneId);
+                    });
+                });
+            } else {
+                milestonesList.innerHTML = '<p class="text-center text-muted">No milestones found.</p>';
+            }
+            
+            // Update recent reports
+            const reportsContainer = document.getElementById('recentReports');
+            reportsContainer.innerHTML = '';
+            
+            if (data.recentReports?.length > 0) {
+                data.recentReports.forEach(report => {
+                    const card = document.createElement('div');
+                    card.className = 'report-card card mb-2';
+                    
+                    // Format report date
+                    let reportDateText = '';
+                    if (report.reportDate) {
+                        const reportDate = new Date(report.reportDate);
+                        reportDateText = reportDate.toLocaleDateString();
+                    }
+                    
+                    card.innerHTML = `
+                        <div class="card-body py-2 px-3">
+                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                <h6 class="mb-0">Weekly Report</h6>
+                                <span class="badge bg-secondary">${reportDateText}</span>
+                            </div>
+                            <p class="mb-1 small">Assignment progress: ${report.assignmentsSummary || 'N/A'}</p>
+                            <p class="mb-1 small">Video hours: ${report.vimeoHoursSummary || 0} hours</p>
+                            <div class="notes-editable p-1 mt-1 border rounded" data-report-id="${report.id}">
+                                ${report.notes || 'Click to add notes...'}
+                            </div>
+                        </div>
+                    `;
+                    
+                    reportsContainer.appendChild(card);
+                });
+                
+                // Add event listeners for editable notes
+                document.querySelectorAll('.notes-editable').forEach(element => {
+                    element.addEventListener('click', function() {
+                        const reportId = this.getAttribute('data-report-id');
+                        const currentNotes = this.textContent.trim();
+                        
+                        const textarea = document.createElement('textarea');
+                        textarea.className = 'form-control';
+                        textarea.rows = 2;
+                        textarea.value = currentNotes === 'Click to add notes...' ? '' : currentNotes;
+                        
+                        this.innerHTML = '';
+                        this.appendChild(textarea);
+                        textarea.focus();
+                        
+                        // Handle saving on blur
+                        textarea.addEventListener('blur', function() {
+                            saveReportNotes(reportId, textarea.value, element);
+                        });
+                        
+                        // Handle saving on Enter key (but allow multiline with Shift+Enter)
+                        textarea.addEventListener('keydown', function(e) {
+                            if (e.key === 'Enter' && !e.shiftKey) {
+                                e.preventDefault();
+                                this.blur();
+                            }
+                        });
+                    });
+                });
+            } else {
+                reportsContainer.innerHTML = '<p class="text-center text-muted">No reports found.</p>';
+            }
+        }
+        
+        function completeMilestone(milestoneId) {
+            fetch(`/api/dashboard/milestone/${milestoneId}/complete`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Failed to update milestone');
+                }
+                return response.json();
+            })
+            .then(data => {
+                // Refresh dashboard data
+                fetch('/api/dashboard/student-data')
+                    .then(response => response.json())
+                    .then(data => updateDashboard(data));
+            })
+            .catch(error => {
+                console.error('Error updating milestone:', error);
+                alert('Error updating milestone. Please try again later.');
+            });
+        }
+        
+        function saveReportNotes(reportId, notes, element) {
+            fetch(`/api/dashboard/report/${reportId}/notes`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ notes: notes })
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Failed to save notes');
+                }
+                return response.json();
+            })
+            .then(data => {
+                element.textContent = data.notes || 'Click to add notes...';
+            })
+            .catch(error => {
+                console.error('Error saving notes:', error);
+                alert('Error saving notes. Please try again later.');
+                element.textContent = notes;
+            });
+        }
+    </script>
 </body>
 </html>

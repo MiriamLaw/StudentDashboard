@@ -13,4 +13,5 @@ public interface ReportRepository extends JpaRepository<Report, Long> {
     List<Report> findByStudentId(Long studentId);
     List<Report> findByStudentIdOrderByReportDateDesc(Long studentId);
     Optional<Report> findByStudentIdAndReportDate(Long studentId, LocalDate reportDate);
+    List<Report> findByStudentIdAndReportDateBetweenOrderByReportDateDesc(Long studentId, LocalDate startDate, LocalDate endDate);
 }

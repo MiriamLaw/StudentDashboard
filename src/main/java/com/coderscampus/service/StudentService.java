@@ -41,6 +41,9 @@ public class StudentService implements UserDetailsService {
     @Autowired
     private PasswordEncoder passwordEncoder;
     
+    @Autowired
+    private DummyDataService dummyDataService;
+    
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
         logger.info("Attempting to load user with username/email: {}", username);
@@ -86,6 +89,9 @@ public class StudentService implements UserDetailsService {
         ProfileSettings profileSettings = new ProfileSettings();
         profileSettings.setStudent(savedStudent);
         profileSettingsRepository.save(profileSettings);
+        
+        // Add dummy data for the new student
+        dummyDataService.addDummyDataToExistingStudent(savedStudent);
         
         return savedStudent;
     }

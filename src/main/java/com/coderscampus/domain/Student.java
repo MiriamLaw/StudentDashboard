@@ -33,12 +33,17 @@ public class Student {
     private Double vimeoHoursWatched;
 
     private String role = "ROLE_USER";
+    
+    private Boolean isDemo = false;
 
     @OneToMany(mappedBy = "student", cascade = CascadeType.ALL)
     private List<Milestone> milestones = new ArrayList<>();
 
     @OneToMany(mappedBy = "student", cascade = CascadeType.ALL)
     private List<Report> reports = new ArrayList<>();
+    
+    @OneToMany(mappedBy = "student", cascade = CascadeType.ALL)
+    private List<VideoProgress> videoProgressList = new ArrayList<>();
 
     @OneToOne(mappedBy = "student", cascade = CascadeType.ALL)
     private ProfileSettings profileSettings;
@@ -161,5 +166,21 @@ public class Student {
 
     public void setReports(List<Report> reports) {
         this.reports = reports;
+    }
+    
+    public Boolean getIsDemo() {
+        return isDemo;
+    }
+
+    public void setIsDemo(Boolean isDemo) {
+        this.isDemo = isDemo;
+    }
+    
+    public List<VideoProgress> getVideoProgressList() {
+        return videoProgressList;
+    }
+
+    public void setVideoProgressList(List<VideoProgress> videoProgressList) {
+        this.videoProgressList = videoProgressList;
     }
 }

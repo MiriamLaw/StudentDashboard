@@ -49,6 +49,9 @@ public class OAuth2UserServiceConfig {
     
     @Autowired
     private PasswordEncoder passwordEncoder;
+    
+    @Autowired
+    private DummyDataService dummyDataService;
 
     @Bean
     public OAuth2UserService<OAuth2UserRequest, OAuth2User> oauth2UserService() {
@@ -146,6 +149,12 @@ public class OAuth2UserServiceConfig {
             ProfileSettings profileSettings = new ProfileSettings();
             profileSettings.setStudent(savedStudent);
             profileSettingsRepository.save(profileSettings);
+            
+            // Add dummy data for the new student
+            if (!isAdmin) {
+                logger.info("Adding dummy data for new student: {}", savedStudent.getEmail());
+                dummyDataService.addDummyDataToExistingStudent(savedStudent);
+            }
             
             return savedStudent;
         }
